@@ -32,7 +32,7 @@ bot.on('message', ctx => {
     const text = ctx.message.text;
     console.log(`[*] Message: ${text}`)
 
-    const reply = shortenUrl(text) ?? "Not Found."
+    const reply = shortenUrl(text) || "Not Found."
     ctx.reply(reply);
 })
 
