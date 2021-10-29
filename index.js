@@ -60,8 +60,7 @@ bot.on("inline_query", (ctx) => {
             message_text:
                 `<a href="${reply}">${reply}</a>`,
             parse_mode: "HTML",
-        },
-        url: reply,
+        }
     } : {
         type: "article",
         id: "NOT_FOUND",
