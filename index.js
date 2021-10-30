@@ -32,7 +32,6 @@ function shortenUrl(url) {
         }
 
         for (const [m, r] of rules.instagram) {
-            console.log(url.hostname);
             if (m(url)) {
                 instagramid = r(url);
                 break;
