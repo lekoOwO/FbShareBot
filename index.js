@@ -2,55 +2,64 @@ const { Bot } = require('grammy')
 
 const bot = new Bot(process.env.token);
 
+const DOMAIN = {
+    "FACEBOOK": "FACEBOOK",
+    "INSTAGRAM": "INSTAGRAM"
+};
+Object.freeze(DOMAIN);
+
 function shortenUrl(url) {
     const rules = {
-        facebook: [
+        [DOMAIN.FACEBOOK]: [
             [url => url.pathname === "/permalink.php", url => url.searchParams.get("story_fbid")],
             [url => /^\/groups\/\d+\/?$/.test(url.pathname), url => url.searchParams.get("multi_permalinks")],
         ],
-        instagram: [
+        [DOMAIN.INSTAGRAM]: [
             [url => ["instagram.com", "www.instagram.com"].includes(url.hostname), url => url.pathname],
         ]
     };
-    const regexs = [
-        /^\/(?:.+)\/posts\/(\d+)\/?$/,
-        /^\/groups\/(?:.+)\/user\/(\d+)\/?$/,
-        /^\/(\d+)\/?$/
-    ];
+    const regexs = {
+        [DOMAIN.FACEBOOK]: [
+            /^\/(?:.+)\/posts\/(\d+)\/?$/,
+            /^\/groups\/(?:.+)\/user\/(\d+)\/?$/,
+            /^\/(\d+)\/?$/
+        ]
+    };
 
     try {
         url = new URL(url);
         const path = url.pathname;
-        let instagramid = null;
-        let fbid = null;
 
-        for (const [m, r] of rules.facebook) {
+        let id, type;
+        for(const [domain, [m, r]] of Object.entries(rules)) {
             if (m(url)) {
-                fbid = r(url);
+                id = r(url);
+                type = domain;
                 break;
             }
         }
 
-        for (const [m, r] of rules.instagram) {
-            if (m(url)) {
-                instagramid = r(url);
-                break;
-            }
-        }
-        if (fbid === null) {
-            for (const regex of regexs) {
-                if (regex.test(path)) {
-                    fbid = path.match(regex)[1];
-                    break
+        if (!id) {
+            for(const [domain, dregexs] of Object.entries(regexs)) {
+                for (const regex of dregexs) {
+                    if (regex.test(path)) {
+                        id = path.match(regex)[1];
+                        type = domain;
+                        break
+                    }
                 }
+                if (id) break;
             }
         }
-        // build result  
-        if (fbid)
-            return `fb.com/${fbid}`
-        if (instagramid)
-            return `instagr.am${instagramid}`
-        return null;
+
+        switch(type) {
+            case DOMAIN.FACEBOOK:
+                return `fb.com/${id}`;
+            case DOMAIN.INSTAGRAM:
+                return `instagr.am/${id}`;
+            default:
+                return null;
+        }
     } catch (e) {
         console.error(e);
         return null;
